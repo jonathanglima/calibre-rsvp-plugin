@@ -16,7 +16,9 @@ the canonical Kotlin converter in the rsvpnano repo:
   conversionCore/.../RsvpWriter.kt, RsvpConverter.kt, RsvpTextUtils.kt
 """
 
+import os
 import re
+import sys
 import mimetypes
 
 from calibre.customize.conversion import OutputFormatPlugin, OptionRecommendation
@@ -140,6 +142,14 @@ class RSVPOutput(OutputFormatPlugin):
             level=OptionRecommendation.LOW,
             help='Emit one @chapter per spine document. If disabled, the whole '
                  'book is written as a single @chapter using the book title.'),
+        OptionRecommendation(
+            name='rsvp_source',
+            recommended_value='',
+            level=OptionRecommendation.LOW,
+            help='Value for the @source header line. If empty, it is derived '
+                 'from the input filename when converting via ebook-convert; '
+                 'set it explicitly to match a specific source (e.g. in GUI '
+                 'conversions, where the input filename is not available).'),
     ))
 
     # ------------------------------------------------------------------ #
@@ -148,14 +158,21 @@ class RSVPOutput(OutputFormatPlugin):
         from calibre.ebooks.oeb.base import barename
 
         title = self._meta_first(oeb.metadata.title) or u'Untitled'
+        # Match the canonical converter: emit @author only for a real author.
+        # Calibre fills its localized "Unknown" placeholder when none is set;
+        # treat that (and blanks) as no-author so the header matches.
         authors = [self._text(a) for a in oeb.metadata.creator]
-        authors = [a for a in authors if a]
+        authors = [a for a in authors if a and a.strip().lower() != u'unknown']
 
         toc_titles = self._toc_title_map(oeb)
 
         lines = [u'@rsvp 1', u'@title ' + normalize_text(title)]
         if opts.rsvp_include_author and authors:
             lines.append(u'@author ' + normalize_text(u', '.join(authors)))
+        source = (getattr(opts, 'rsvp_source', u'') or u'').strip() \
+            or self._source_filename()
+        if source:
+            lines.append(u'@source ' + normalize_text(source))
 
         wrote_any = False
         chapter_count = 0
@@ -217,6 +234,25 @@ class RSVPOutput(OutputFormatPlugin):
 
     # ------------------------------------------------------------------ #
     # helpers
+
+    @staticmethod
+    def _source_filename():
+        """Best-effort input filename for @source.
+
+        Calibre's output-plugin API does not expose the input path, so this is
+        only recoverable from the ebook-convert CLI argv. Returns None for GUI
+        / server conversions (use the rsvp_source option there).
+        """
+        try:
+            argv = sys.argv or []
+            if (argv and os.path.basename(argv[0]).startswith('ebook-convert')
+                    and len(argv) >= 2):
+                base = os.path.basename(argv[1])
+                if base and '.' in base:
+                    return base
+        except Exception:
+            pass
+        return None
 
     @staticmethod
     def _text(obj):
