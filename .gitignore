@@ -1,0 +1,9 @@
+# build artifact — install with `calibre-customize -b ./rsvp_output`, or build with zip
+RSVP_Output.zip
+
+# python
+__pycache__/
+*.pyc
+
+# tooling scratch state (not part of the project)
+.omc/
