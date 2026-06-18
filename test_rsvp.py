@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.8"
+# dependencies = ["lxml"]
+# ///
 """Standalone test for the RSVP output plugin's logic.
 
 Stubs the `calibre.*` imports so the REAL plugin module can be imported and

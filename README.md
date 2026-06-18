@@ -163,5 +163,9 @@ for the full end-to-end setup (issue #9).
 ## Test
 
 ```bash
-python3 test_rsvp.py      # stubs calibre.*, exercises the real plugin logic
+uv run test_rsvp.py       # auto-provisions lxml in an ephemeral env; stubs calibre.*
 ```
+
+The test carries [PEP 723](https://peps.python.org/pep-0723/) inline metadata, so
+`uv` installs its one dependency (`lxml`) on the fly — no venv, no system-Python
+changes. Without `uv`: `pip install lxml && python3 test_rsvp.py`.
