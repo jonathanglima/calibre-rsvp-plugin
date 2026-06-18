@@ -227,4 +227,28 @@ assert t2.count('@chapter') == 1, t2.count('@chapter')
 assert '@chapter My Book' in t2
 print('single-chapter mode: PASS')
 
+# --- #4: a heading promoted to @chapter is not duplicated in the body ---- #
+dup_doc = ('<html xmlns="%s"><body>'
+           '<h1>Chapter One</h1>'
+           '<p>Body text follows.</p>'
+           '</body></html>') % XHTML
+oeb_dup = FakeOeb(
+    FakeMeta('Dup Book', ['A']),
+    [FakeSpineItem('d1.xhtml', dup_doc)],
+    FakeToc([FakeTocNode('d1.xhtml', 'Chapter One')]),   # TOC title == heading
+)
+out3 = os.path.join(tempfile.mkdtemp(), 'book3.rsvp')
+plugin.convert(oeb_dup, out3, None, Opts(), Log())
+t3 = open(out3, encoding='utf-8').read()
+assert '@chapter Chapter One' in t3
+assert t3.count('Chapter One') == 1, t3            # once, as @chapter only
+assert 'Body text follows.' in t3
+d3 = t3.split('\n')
+dbeg = d3.index('@chapter Chapter One')
+assert d3[dbeg + 1] == 'Body text follows.', d3[dbeg + 1]
+# negative case: when TOC title differs from the heading, keep the heading
+# (covered by the main `oeb` above: TOC 'The Beginning' + h1 'Chapter One')
+assert lines[beg + 1] == 'Chapter One'
+print('heading-not-duplicated (#4): PASS')
+
 print('\nALL TESTS PASSED')

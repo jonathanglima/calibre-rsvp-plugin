@@ -192,10 +192,15 @@ class RSVPOutput(OutputFormatPlugin):
                 chapter_title = (toc_titles.get(self._base_href(item.href))
                                  or self._first_heading(root, barename)
                                  or (u'Section %d' % (index + 1)))
+                norm_title = normalize_text(chapter_title)
                 lines.append(u'')
-                lines.append(u'@chapter ' + normalize_text(chapter_title))
+                lines.append(u'@chapter ' + norm_title)
                 chapter_count += 1
                 first_para = True
+                # Don't repeat a heading that was promoted to the chapter
+                # title (matches the canonical converter).
+                if paragraphs[0][1] and paragraphs[0][0] == norm_title:
+                    paragraphs = paragraphs[1:]
             else:
                 if not single_chapter_open:
                     lines.append(u'')
@@ -206,8 +211,8 @@ class RSVPOutput(OutputFormatPlugin):
                 else:
                     first_para = False
 
-            for para in paragraphs:
-                words = output_tokens(para)
+            for para_text, _is_heading in paragraphs:
+                words = output_tokens(para_text)
                 if not words:
                     continue
                 word_count += len(words)
@@ -297,19 +302,20 @@ class RSVPOutput(OutputFormatPlugin):
         return False
 
     def _extract_paragraphs(self, root, barename):
-        """Document-order text of leaf-ish block elements (no double-count)."""
+        """Document-order (text, is_heading) of leaf-ish block elements."""
         paragraphs = []
         for el in root.iter():
             tag = el.tag
             if not isinstance(tag, str):
                 continue  # comments / processing instructions
-            if barename(tag) not in BLOCK_TAGS:
+            bn = barename(tag)
+            if bn not in BLOCK_TAGS:
                 continue
             if self._has_block_descendant(el, barename):
                 continue  # container; its children carry the text
             text = normalize_text(u''.join(el.itertext()))
             if text:
-                paragraphs.append(text)
+                paragraphs.append((text, bn in HEADING_TAGS))
         return paragraphs
 
     def _first_heading(self, root, barename):
