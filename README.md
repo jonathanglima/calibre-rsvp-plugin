@@ -148,7 +148,7 @@ recommended workflow is:
 The device client uses the ajax API (`/ajax/search`, `/ajax/book/<id>`,
 `/get/rsvp/<id>/<lib>`) rather than OPDS, but the MIME registration this plugin
 provides makes both paths work. See the
-[firmware Calibre sync docs](https://github.com/ionutdecebal/rsvpnano/blob/feat/calibre-sync/docs/calibre-sync.md)
+[firmware Calibre sync docs](https://github.com/jonathanglima/rsvpnano/blob/feat/calibre-sync/docs/calibre-sync.md)
 for the full end-to-end setup.
 
 ## Known limitations
