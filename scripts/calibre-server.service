@@ -1,0 +1,17 @@
+[Unit]
+Description=Calibre Content Server (rsvpnano library)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Serves ~/CalibreLibrary on :8080 so the rsvpnano device can pull over the LAN.
+# Install: copy to ~/.config/systemd/user/calibre-server.service
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now calibre-server
+# To keep it running without being logged in:  loginctl enable-linger "$USER"
+ExecStart=/usr/bin/calibre-server --port 8080 %h/CalibreLibrary
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target
